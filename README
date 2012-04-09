@@ -1,0 +1,8 @@
+KungFw - iptables ruleset generator
+
+KungFw is a perl script that generates complex rulesets from a easy
+to read and maintain YAML file.
+
+See the builtin documentation by running: perldoc kungfw.pl
+
+Checkout the example file for a syntax overview.

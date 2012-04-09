@@ -1,0 +1,328 @@
+#
+# fatwall 2 yml file
+#
+# If no target is specified the services apply to the localhost and are
+# applied in the INPUT & OUTPUT chains. If the services are specified
+# under a target then they apply to packets destined for or coming from
+# the target in the FORWARD chain.
+#
+# If you add a service you MUST explictly set a policy of allow or deny
+# (or both). The defaults for these items are:
+#
+# default order: [allow, deny]
+# default allow: none
+# default deny: all
+#
+# For inbound connections it applies to the source address, for outbound it
+# applies to the destination address. If you need to specify different rules
+# for inbound & outbound add sub members to the allow/deny directive.
+#
+# By default inbound connections allow to any address on the machine, to
+# specify one explicitly use the destination sub member. For outbound
+# you can specify a source sub member. 
+#
+# Because the default allow is none you MUST specify an outbound member
+# in an allow statement to operate in client mode when you've specified
+# any other sub members, else all traffic will be dropped outbound. If
+# allow is simply all then outbound is also all.
+#
+# If you do not specify a port, or ports, for a service the service name
+# will be looked up in /etc/services
+#
+# Service types can be client, server or both. They default to both.
+#
+
+---
+# mode can be bridge or router
+mode: host
+
+# loopback interface
+loopback: lo
+
+# the bridge interface, omit if in router mode
+bridge: br0
+
+# the two sides of the firewall
+outside: eth0
+inside: eth1
+
+# networks which are local on the inside
+localnets:
+
+# set this to yes if you use rfc1918 space in your network
+# if set to no (or unset) rfc1918 will be dropped 
+rfc1918: no
+
+# allow directed (the broadcast of the local networks) or
+# limited (255.255.255.255) broadcasts to input and forward
+# defaults to no
+broadcasts:
+  input:
+    directed: yes
+    limited: no
+  output:
+    directed: yes
+    limited: no
+  forward: no
+
+# yes or no for multicast
+multicast: yes
+
+# a list of address which are banned from all communication
+banned: []
+
+# any custom rules, these are passed directly to iptables
+# with no verification, use with care.
+custom:
+
+# decorations are a way to simplify repeated services
+# define the service under the decorations heading and then use
+# the decorate array under a services heading to include it
+decorations:
+  ssh:
+    allow: all
+    order: [allow, deny]
+    type: both
+
+  ssh_client:
+    allow: all
+    type: client
+
+  www:
+    ports:
+      80: tcp
+      443: tcp
+    allow: all
+    type: server
+
+  www_lvs:
+    ports:
+      80: tcp
+      443: tcp
+    allow: all
+    type: server
+    states: no
+
+  www_client:
+    ports:
+      80: tcp
+      443: tcp
+    allow: all
+    type: client
+
+  www_local:
+    ports:
+      80: tcp
+      443: tcp
+    allow: all
+    type: client
+    outside: eth1
+
+  www_corp:
+    ports:
+      80: tcp
+      443: tcp
+    allow:
+      inbound: [corp.fatbox.ca, ns2.fatbox.ca]
+      outbound: all
+    type: server
+
+  snmp_client:
+    ports:
+      161: both
+      162: both
+    allow: all
+    type: client
+
+  snmp:
+    ports:
+      161: both
+      162: both
+    allow:
+      inbound: [67.205.110.38, 207.192.71.148]
+    type: server
+
+  snmp_local:
+    ports:
+      161: both
+      162: both
+    allow:
+      inbound: [67.205.110.38, 207.192.71.148]
+    type: server
+    outside: eth1
+    inside: eth0
+
+  ntp_client:
+    ports:
+      123: udp
+    allow:
+      outbound: [69.93.127.248, 207.192.71.148]
+    type: client
+
+  dns_client:
+    ports:
+      53: both
+    allow: all
+    type: client
+
+  ldap_local:
+    ports:
+      389: tcp
+      636: tcp
+    allow: all
+    outside: eth1
+    type: client
+
+  ldap_client:
+    ports:
+      389: tcp
+      636: tcp
+    allow: all
+    type: client
+
+  ldap:
+    ports:
+      389: tcp
+      636: tcp
+    allow: all
+
+  ldap_ext:
+    ports:
+      389: tcp
+      636: tcp
+    allow:
+      inbound: [corp.fatbox.ca, ns1.fatbox.ca, ns2.fatbox.ca, cl-t037-520cl.mtl.fatbox.ca, 72.55.137.0/28, 72.55.184.224/28, vsrv1.fatbox.ca]
+
+  ftp:
+    ports:
+      21: tcp
+    allow: all
+    type: both
+
+  puppet:
+    ports:
+      8140: tcp
+    allow:
+      outbound: [67.205.110.38]
+    type: client
+
+  puppet_local:
+    ports:
+      8140: tcp
+    allow:
+      outbound: [67.205.110.38]
+    type: client
+    outside: eth1
+
+  puppet_master:
+    ports:
+      8140: tcp
+    type: server
+    allow:
+      inbound: [corp.fatbox.ca, ns1.fatbox.ca, ns2.fatbox.ca, cl-t037-520cl.mtl.fatbox.ca, 72.55.137.0/28, 72.55.184.224/28, vsrv1.fatbox.ca, 70.38.123.160/27]
+
+  smtp:
+    ports:
+      25: tcp
+    allow: all
+    type: server
+
+  smtp_client:
+    ports:
+      25: tcp
+    allow:
+      outbound: [72.55.148.15]
+    type: client
+
+  smtp_local:
+    ports:
+      25: tcp
+    allow:
+      outbound: [72.55.148.15]
+    type: client
+    outside: eth1
+
+  smtp_full:
+    ports:
+      25: tcp
+    allow: all
+    type: client
+
+  jabber:
+    ports:
+      5269: tcp
+      5222: tcp
+    allow: all
+
+  jabber_client:
+    ports:
+      5269: tcp
+      5222: tcp
+    allow: all
+    type: client
+
+  jabber_local:
+    ports:
+      5269: tcp
+      5222: tcp
+    allow: all
+    type: client
+    outside: eth1
+
+  adminirc:
+    ports:
+      8687: tcp
+    allow: all
+
+  adminirc_local:
+    ports:
+      8687: tcp
+    allow: all
+    type: client
+    outside: eth1
+
+  svn_client:
+    ports:
+      3690: tcp
+    allow: all
+    type: client
+
+  mysql:
+    ports:
+      3306: tcp
+    allow: all
+    type: server
+
+  mysql_client:
+    ports:
+      3306: tcp
+    allow: all
+    type: client
+
+  ami_corp:
+    ports:
+      5038: tcp
+    allow: [corp.fatbox.ca]
+    type: server
+
+
+# TODO: make templating work
+# see: use directive for targets
+templates:
+  www_lvs:
+    services:
+      decorate: [www]
+
+  base_target:
+    services:
+      decorate: [smtp_client, ntp_client, dns_client, www_client, snmp, puppet, ldap_client]
+
+# now list local services
+# each local service is in the INPUT/OUTPUT chains
+local:
+  192.168.168.50:
+    services:
+      decorate: [ssh, www, www_client, smtp_client, ntp_client, dns_client]
+
+# each target is a host in the FORWARD chain
+targets:
